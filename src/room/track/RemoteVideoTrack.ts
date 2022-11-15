@@ -23,6 +23,9 @@ export default class RemoteVideoTrack extends RemoteTrack {
 
   private lastDimensions?: Track.Dimensions;
 
+  // ADDENDUM:
+  private isDefaultVisibilityObserverOverridden: boolean = false;
+
   constructor(
     mediaTrack: MediaStreamTrack,
     sid: string,
@@ -57,6 +60,21 @@ export default class RemoteVideoTrack extends RemoteTrack {
         attachToElement(this._mediaStreamTrack, element);
       }
     });
+  }
+
+  // ADDENDUM(Muse):
+  setVisible(value: boolean) {
+    this.elementInfos.forEach(el => {
+      el.setVisible(value)
+    })
+  }
+
+  // ADDENDUM(Muse):
+  setIsDefaultVisibilityObserverOverridden(value: boolean) {
+    this.isDefaultVisibilityObserverOverridden = value
+    this.elementInfos.forEach(el => {
+      el.setIsDefaultVisibilityObserverOverridden(value)
+    })
   }
 
   attach(): HTMLMediaElement;
@@ -210,6 +228,11 @@ export default class RemoteVideoTrack extends RemoteTrack {
   }
 
   protected async handleAppVisibilityChanged() {
+    // ADDENDUM(Muse):
+    if (this.isDefaultVisibilityObserverOverridden) {
+      return
+    }
+
     await super.handleAppVisibilityChanged();
     if (!this.isAdaptiveStream) return;
     this.updateVisibility();
@@ -301,6 +324,10 @@ export interface ElementInfo {
   pictureInPicture: boolean;
   visibilityChangedAt: number | undefined;
 
+  // ADDENDUM(Muse):
+  setIsDefaultVisibilityObserverOverridden: (value: boolean) => void;
+  setVisible: (value: boolean) => void;
+  
   handleResize?: () => void;
   handleVisibilityChanged?: () => void;
   observe(): void;
@@ -320,6 +347,9 @@ class HTMLElementInfo implements ElementInfo {
 
   visibilityChangedAt: number | undefined;
 
+  // ADDENDUM(Muse):
+  isDefaultVisibilityObserverOverridden: boolean;
+
   handleResize?: () => void;
 
   handleVisibilityChanged?: () => void;
@@ -333,6 +363,7 @@ class HTMLElementInfo implements ElementInfo {
     this.isIntersecting = visible ?? isElementInViewport(element);
     this.isPiP = isWeb() && document.pictureInPictureElement === element;
     this.visibilityChangedAt = 0;
+    this.isDefaultVisibilityObserverOverridden = false;
   }
 
   width(): number {
@@ -341,6 +372,17 @@ class HTMLElementInfo implements ElementInfo {
 
   height(): number {
     return this.element.clientHeight;
+  }
+
+  // ADDENDUM(Muse):
+  setIsDefaultVisibilityObserverOverridden(value: boolean) {
+    this.isDefaultVisibilityObserverOverridden = value
+  }
+
+  setVisible(value: boolean) {
+    this.visible = value
+    this.visibilityChangedAt = Date.now();
+    this.handleVisibilityChanged?.();
   }
 
   observe() {
@@ -360,6 +402,10 @@ class HTMLElementInfo implements ElementInfo {
   }
 
   private onVisibilityChanged = (entry: IntersectionObserverEntry) => {
+    if (this.isDefaultVisibilityObserverOverridden) {
+      return
+    }
+
     const { target, isIntersecting } = entry;
     if (target === this.element) {
       this.isIntersecting = isIntersecting;
