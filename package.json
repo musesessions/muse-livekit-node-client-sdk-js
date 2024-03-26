@@ -37,7 +37,8 @@
     "format": "prettier --write src example/sample.ts",
     "format:check": "prettier --check src",
     "release": "yarn build && changeset publish",
-    "downlevel-dts": "downlevel-dts ./dist/ ./dist/ts4.2 --to=4.2"
+    "downlevel-dts": "downlevel-dts ./dist/ ./dist/ts4.2 --to=4.2",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "async-await-queue": "^1.2.1",
