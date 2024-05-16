@@ -337,8 +337,10 @@ export interface ElementInfo {
 class HTMLElementInfo implements ElementInfo {
   element: HTMLMediaElement;
 
+  isForcedVisible: boolean = true;
+
   get visible(): boolean {
-    return this.isPiP || this.isIntersecting;
+    return this.isPiP || this.isIntersecting || this.isForcedVisible;
   }
 
   get pictureInPicture(): boolean {
@@ -380,7 +382,7 @@ class HTMLElementInfo implements ElementInfo {
   }
 
   setVisible(value: boolean) {
-    this.visible = value
+    this.isForcedVisible = value
     this.visibilityChangedAt = Date.now();
     this.handleVisibilityChanged?.();
   }
