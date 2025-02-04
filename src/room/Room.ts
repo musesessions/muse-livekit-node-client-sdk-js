@@ -754,7 +754,7 @@ class Room extends (EventEmitter as new () => TypedEmitter<RoomEventCallbacks>) 
     }
     if (isWeb()) {
       document.addEventListener('freeze', this.onPageLeave);
-      navigator.mediaDevices?.addEventListener('devicechange', this.handleDeviceChange);
+      // navigator.mediaDevices?.addEventListener('devicechange', this.handleDeviceChange);
     }
     this.setAndEmitConnectionState(ConnectionState.Connected);
     this.emit(RoomEvent.Connected);
