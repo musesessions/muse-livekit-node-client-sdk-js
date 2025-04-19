@@ -40,6 +40,27 @@ export function extractProcessorsFromOptions(options: CreateLocalTracksOptions) 
   return { audioProcessor, videoProcessor };
 }
 
+async function createTrackForMonoChannel(track: MediaStreamTrack, channel: number) {
+  const audioContext = new window.AudioContext()
+  const mediaStream = new MediaStream([track])
+
+  const source = audioContext.createMediaStreamSource(mediaStream)
+  if (channel >= source.channelCount) {
+    audioContext.close()
+    throw new Error(`Mono channel ${channel + 1} does not exist on this device.`)
+  }
+  const splitter = audioContext.createChannelSplitter(2)
+  const merger = audioContext.createChannelMerger(1)
+  const destination = audioContext.createMediaStreamDestination()
+
+  source.connect(splitter)
+  splitter.connect(merger, channel)
+  merger.connect(destination)
+
+  const newTrack = destination.stream.getAudioTracks()[0]
+  return newTrack
+}
+
 /**
  * Creates a local video and audio track at the same time. When acquiring both
  * audio and video tracks together, it'll display a single permission prompt to
@@ -83,6 +104,11 @@ export async function createLocalTracks(
       const conOrBool = isAudio ? constraints.audio : constraints.video;
       if (typeof conOrBool !== 'boolean') {
         trackConstraints = conOrBool;
+      }
+
+      // NOTE: muse fork
+      if (isAudio && typeof options.audio !== 'boolean' && options.audio?.monoChannelSelection != null) {
+        mediaStreamTrack = await createTrackForMonoChannel(mediaStreamTrack, options.audio.monoChannelSelection)
       }
 
       // update the constraints with the device id the user gave permissions to in the permission prompt

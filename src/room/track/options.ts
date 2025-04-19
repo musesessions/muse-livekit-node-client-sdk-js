@@ -226,6 +226,12 @@ export interface AudioCaptureOptions {
   channelCount?: ConstrainULong;
 
   /**
+   * Forces a stereo track to be mono (0 for left, 1 for right).
+   * This option is introduced as a Muse fork.
+   */
+  monoChannelSelection?: number;
+
+  /**
    * A ConstrainDOMString object specifying a device ID or an array of device
    * IDs which are acceptable and/or required.
    */
